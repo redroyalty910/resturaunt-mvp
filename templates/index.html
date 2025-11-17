@@ -1,0 +1,614 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratatouille - Online Ordering & Reservations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+
+        .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            }
+
+        .hero-button {
+            transition: all 0.3s ease;
+            transform: scale(1);
+        }
+
+            .hero-button:hover {
+                transform: scale(1.03);
+                box-shadow: 0 15px 30px -10px rgba(220, 38, 38, 0.5); /* red-600 shadow */
+            }
+
+        .sticky-nav {
+            top: 0;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md sticky-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="text-3xl font-extrabold text-red-700">
+                Ratatouille
+            </div>
+            <nav class="space-x-4 flex items-center">
+                <button id="navHomeBtn" class="text-gray-600 hover:text-red-700 font-semibold hidden" onclick="showMainContent()">Menu</button>
+                <button id="navOrderBtn" class="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors shadow-md" onclick="showOrderForm('order')">
+                    Order Online
+                </button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md" onclick="showOrderForm('reservation')">
+                    Reserve Table
+                </button>
+            </nav>
+        </div>
+    </header>
+
+
+    <main id="main-content" class="flex-grow">
+
+        <section class="bg-gray-900 text-white py-20 mb-12 shadow-inner">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
+                    Taste the Passion. Order Online.
+                </h1>
+                <p class="text-xl text-red-300 mb-8 max-w-2xl mx-auto">
+                    Fresh ingredients, handcrafted meals, delivered right to your door.
+                </p>
+                <button class="hero-button bg-red-700 text-white px-10 py-4 rounded-xl text-2xl font-bold uppercase shadow-2xl hover:bg-red-800" onclick="showOrderForm('order')">
+                    Start Your Order
+                </button>
+            </div>
+        </section>
+
+
+        <section class="mb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row gap-8">
+
+                <div class="lg:w-3/4">
+                    <h3 class="text-4xl font-bold text-gray-800 mb-8 text-center border-b-2 border-gray-300 pb-4">Our Menu</h3>
+
+                    <nav id="category-nav" class="flex justify-center flex-wrap space-x-2 sm:space-x-4 mb-8 sticky top-16 bg-white p-4 rounded-xl shadow-lg z-20">
+                    </nav>
+
+                    <div id="menu-categories">
+                    </div>
+                </div>
+
+                <div class="lg:w-1/4">
+                    <div id="cart-summary" class="sticky top-20 bg-white p-6 rounded-xl shadow-2xl border-t-4 border-red-700">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-4">Your Order 🛒</h4>
+                        <div id="cart-items" class="space-y-3 border-b pb-4 mb-4 min-h-[50px]">
+                            <p class="text-gray-500" id="empty-cart-message">Your cart is empty.</p>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl mb-4">
+                            <span>Total:</span>
+                            <span id="cart-total">$0.00</span>
+                        </div>
+                        <button id="clear-cart-btn" onclick="clearCart()" class="w-full text-sm text-gray-500 hover:text-red-700 mb-3 hidden">
+                            Clear All Items
+                        </button>
+                        <button onclick="showOrderForm('order')" class="w-full bg-red-700 text-white px-4 py-3 rounded-lg font-bold uppercase hover:bg-red-800 transition-colors">
+                            Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section id="action-forms" class="hidden flex-grow pt-8 pb-16">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white p-8 md:p-12 rounded-xl shadow-2xl border-t-4 border-red-700">
+                <div class="flex border-b border-gray-200 mb-8">
+                    <button id="tab-order" onclick="showForm('order')" class="flex-1 py-3 text-center text-lg font-semibold border-b-2 border-red-700 text-red-700 transition-colors">
+                        Place Order
+                    </button>
+                    <button id="tab-reservation" onclick="showForm('reservation')" class="flex-1 py-3 text-center text-lg font-semibold border-b-2 border-transparent text-gray-500 hover:text-red-700 transition-colors">
+                        Book Reservation
+                    </button>
+                </div>
+
+                <div id="order-form-content">
+                    <h3 class="text-4xl font-bold text-gray-900 mb-6 text-center">Complete Your Order</h3>
+                    <div id="order-summary-details" class="p-4 bg-red-50 rounded-lg mb-6 border border-red-200 max-h-40 overflow-y-auto">
+                    </div>
+
+                    <form id="contact-form">
+                        <div class="mb-6">
+                            <label for="name" class="block text-lg font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" id="name" name="name" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150"
+                                   placeholder="e.g., Jane Doe">
+                        </div>
+
+                        <div class="mb-6">
+                            <label for="address" class="block text-lg font-medium text-gray-700 mb-2">Home Address (if Delivery)</label>
+                            <input type="text" id="address" name="address"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150"
+                                   placeholder="e.g., 123 Main St, Anytown, USA">
+                        </div>
+
+                        <div class="mb-8">
+                            <label for="phone" class="block text-lg font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150"
+                                   placeholder="e.g., (123) 456-7890 (for text confirmation)">
+                        </div>
+
+                        <div id="order-status-message" class="text-center p-4 rounded-lg hidden transition-all duration-300 mb-4" role="alert"></div>
+
+                        <button type="submit"
+                                class="w-full bg-red-700 text-white px-6 py-3 rounded-xl text-xl font-bold uppercase hover:bg-red-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-red-500 shadow-lg hover:shadow-xl">
+                            Finalize Order
+                        </button>
+                    </form>
+                </div>
+
+                <div id="reservation-form-content" class="hidden">
+                    <h3 class="text-4xl font-bold text-gray-900 mb-6 text-center">Book a Table</h3>
+
+                    <form id="reservation-form">
+                        <div class="mb-6">
+                            <label for="res-name" class="block text-lg font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" id="res-name" name="res-name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150" placeholder="e.g., Jane Doe">
+                        </div>
+                        <div class="mb-6">
+                            <label for="res-phone" class="block text-lg font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="tel" id="res-phone" name="res-phone" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150" placeholder="e.g., (123) 456-7890">
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div>
+                                <label for="res-date" class="block text-lg font-medium text-gray-700 mb-2">Date</label>
+                                <input type="date" id="res-date" name="res-date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150">
+                            </div>
+                            <div>
+                                <label for="res-time" class="block text-lg font-medium text-gray-700 mb-2">Time</label>
+                                <input type="time" id="res-time" name="res-time" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150">
+                            </div>
+                            <div>
+                                <label for="res-guests" class="block text-lg font-medium text-gray-700 mb-2">Guests</label>
+                                <input type="number" id="res-guests" name="res-guests" min="1" max="20" value="2" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150">
+                            </div>
+                        </div>
+
+                        <div id="res-status-message" class="text-center p-4 rounded-lg hidden transition-all duration-300 mb-4" role="alert"></div>
+
+                        <button type="submit" class="w-full bg-red-700 text-white px-6 py-3 rounded-xl text-xl font-bold uppercase hover:bg-red-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-red-500 shadow-lg hover:shadow-xl">
+                            Confirm Reservation
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button class="text-gray-600 hover:text-red-700 font-medium text-sm" onclick="showMainContent()">
+                        <span class="mr-1">&leftarrow;</span> Back to Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Ratatouille. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const mainContent = document.getElementById('main-content');
+        const actionForms = document.getElementById('action-forms');
+
+        const contactForm = document.getElementById('contact-form');
+        const reservationForm = document.getElementById('reservation-form');
+        const orderFormContent = document.getElementById('order-form-content');
+        const reservationFormContent = document.getElementById('reservation-form-content');
+
+        const orderStatusMessage = document.getElementById('order-status-message');
+        const resStatusMessage = document.getElementById('res-status-message');
+
+        const navOrderBtn = document.getElementById('navOrderBtn');
+        const navHomeBtn = document.getElementById('navHomeBtn');
+        const tabOrder = document.getElementById('tab-order');
+        const tabReservation = document.getElementById('tab-reservation');
+
+        const categoryNav = document.getElementById('category-nav');
+        const menuCategoriesElement = document.getElementById('menu-categories');
+
+        const cartItemsElement = document.getElementById('cart-items');
+        const cartTotalElement = document.getElementById('cart-total');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const orderSummaryDetails = document.getElementById('order-summary-details');
+        const clearCartBtn = document.getElementById('clear-cart-btn');
+
+        const API_BASE_URL = window.location.origin;
+
+        let cart = [];
+
+        let menuData = [];
+
+        async function loadMenuFromAPI() {
+            const response = await fetch("/api/menu");
+            const items = await response.json();
+
+            // Convert DB format → frontend format
+            menuData = items.map(item => ({
+                id: item.id || item.item_name.toLowerCase().replace(/\s+/g, '-'),
+                name: item.item_name,
+                price: item.price,
+                category: item.category.toLowerCase(),
+                description: item.description || "",
+                image: item.image   // provided by Flask: /images/...jpg
+            }));
+
+            renderMenu();
+        }
+
+        function showMainContent() {
+            mainContent.classList.remove('hidden');
+            actionForms.classList.add('hidden');
+            navOrderBtn.classList.remove('hidden');
+            navHomeBtn.classList.add('hidden');
+            resetAllForms();
+
+            checkMenuTime();
+        }
+
+        function showOrderForm(defaultTab = 'order') {
+            if (defaultTab === 'order' && cart.length === 0) {
+                console.log('Your cart is empty. Please add items before checking out.');
+                const checkoutButton = document.querySelector('#cart-summary button');
+                checkoutButton.textContent = 'Cart is Empty!';
+                checkoutButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+
+                setTimeout(() => {
+                    checkoutButton.textContent = 'Checkout';
+                    checkoutButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                }, 1500);
+
+                return;
+            }
+
+            mainContent.classList.add('hidden');
+            actionForms.classList.remove('hidden');
+            navOrderBtn.classList.add('hidden');
+            navHomeBtn.classList.remove('hidden');
+            window.scrollTo(0, 0)
+            showForm(defaultTab);
+            if (defaultTab === 'order') {
+                updateOrderSummary();
+            }
+        }
+
+        function showForm(formType) {
+            if (formType === 'order') {
+                orderFormContent.classList.remove('hidden');
+                reservationFormContent.classList.add('hidden');
+                tabOrder.classList.add('border-red-700', 'text-red-700');
+                tabOrder.classList.remove('border-transparent', 'text-gray-500');
+                tabReservation.classList.remove('border-red-700', 'text-red-700');
+                tabReservation.classList.add('border-transparent', 'text-gray-500');
+            } else if (formType === 'reservation') {
+                orderFormContent.classList.add('hidden');
+                reservationFormContent.classList.remove('hidden');
+                tabReservation.classList.add('border-red-700', 'text-red-700');
+                tabReservation.classList.remove('border-transparent', 'text-gray-500');
+                tabOrder.classList.remove('border-red-700', 'text-red-700');
+                tabOrder.classList.add('border-transparent', 'text-gray-500');
+            }
+            resetStatusMessages();
+        }
+
+        function resetAllForms() {
+            contactForm.reset();
+            reservationForm.reset();
+            resetStatusMessages();
+            contactForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = false);
+            reservationForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = false);
+        }
+
+        function resetStatusMessages() {
+            orderStatusMessage.classList.add('hidden');
+            orderStatusMessage.innerHTML = '';
+            resStatusMessage.classList.add('hidden');
+            resStatusMessage.innerHTML = '';
+        }
+
+        function displayStatus(element, message, classes) {
+            element.innerHTML = message;
+            element.className = `text-center p-4 rounded-lg transition-all duration-300 mb-4 font-semibold ${classes}`;
+            element.classList.remove('hidden');
+        }
+
+        const categoryMap = {
+            'appetizer': { title: 'Appetizers 🍽️', id: 'appetizer-category', emoji: '🍽️', timeRule: null },
+            'breakfast': { title: 'Breakfast 🍳', id: 'breakfast-category', emoji: '🍳', timeRule: { start: 7, end: 11 } }, // 7 AM – 11 AM
+            'lunch': { title: 'Lunch 🥗', id: 'lunch-category', emoji: '🥗', timeRule: { start: 11, end: 16 } },    // 11 AM – 4 PM
+            'dinner': { title: 'Dinner 🥩', id: 'dinner-category', emoji: '🥩', timeRule: { start: 16, end: 22 } },     // 4 PM – 10 PM
+            'dessert': { title: 'Desserts 🍰', id: 'dessert-category', emoji: '🍰', timeRule: null }
+        };
+
+        function renderMenu() {
+            const categories = menuData.reduce((acc, item) => {
+                if (!acc[item.category]) {
+                    acc[item.category] = [];
+                }
+                acc[item.category].push(item);
+                return acc;
+            }, {});
+
+            let menuHtml = '';
+            let navHtml = '';
+
+            Object.keys(categoryMap).forEach(key => {
+                const catInfo = categoryMap[key];
+                const items = categories[key] || [];
+
+                navHtml += `<a href="#${catInfo.id}" class="text-red-700 font-semibold hover:text-red-900 transition-colors p-2 rounded-lg">${catInfo.title.split(' ')[0]}</a>`;
+
+                let timeNote = '';
+                if (catInfo.timeRule) {
+                    const start = catInfo.timeRule.start % 12 || 12;
+                    const end = catInfo.timeRule.end % 12 || 12;
+                    const startPeriod = catInfo.timeRule.start < 12 ? 'AM' : 'PM';
+                    const endPeriod = catInfo.timeRule.end < 12 ? 'AM' : 'PM';
+                    timeNote = ` (${start} ${startPeriod} – ${end} ${endPeriod})`;
+                }
+
+                menuHtml += `
+                    <div id="${catInfo.id}" class="mb-12 pt-4 scroll-mt-28 menu-category-block">
+                        <h4 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-red-700 pl-3">${catInfo.title}${timeNote}</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                `;
+
+                items.forEach(item => {
+                    menuHtml += `
+                        <div class="card bg-white p-6 rounded-xl border border-gray-200 flex justify-between items-center">
+                            <div>
+                                <h5 class="text-xl font-semibold text-gray-900">${item.name}</h5>
+                                <p class="text-gray-600">${item.description}</p>
+                                <p class="text-red-700 font-bold text-lg">$${item.price.toFixed(2)}</p>
+                            </div>
+                            <button onclick="addToCart({id: '${item.id}', name: '${item.name}', price: ${item.price}})"
+                                    class="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors">
+                                Add
+                            </button>
+                        </div>
+                    `;
+                });
+
+                menuHtml += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            menuCategoriesElement.innerHTML = menuHtml;
+            categoryNav.innerHTML = navHtml;
+        }
+
+        function checkMenuTime() {
+            const now = new Date();
+            const hour = now.getHours();
+
+            Object.keys(categoryMap).forEach(key => {
+                const catInfo = categoryMap[key];
+                const element = document.getElementById(catInfo.id);
+
+                if (!element) return;
+
+                if (catInfo.timeRule) {
+                    const { start, end } = catInfo.timeRule;
+                    if (hour >= start && hour < end) {
+                        element.classList.remove('hidden');
+                    } else {
+                        element.classList.add('hidden');
+                    }
+                } else {
+                    element.classList.remove('hidden');
+                }
+            });
+        }
+
+
+        function removeLineItem(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
+            updateCartDisplay();
+            if (!actionForms.classList.contains('hidden')) {
+                updateOrderSummary();
+            }
+            console.log(`Item with ID ${itemId} completely removed from cart.`);
+        }
+
+        function decreaseQuantity(itemId) {
+            const existingItem = cart.find(i => i.id === itemId);
+            if (existingItem) {
+                existingItem.quantity -= 1;
+                if (existingItem.quantity <= 0) {
+                    removeLineItem(itemId);
+                } else {
+                    updateCartDisplay();
+                    if (!actionForms.classList.contains('hidden')) {
+                        updateOrderSummary();
+                    }
+                }
+            }
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartDisplay();
+            if (!actionForms.classList.contains('hidden')) {
+                updateOrderSummary();
+                showMainContent();
+            }
+            console.log('Cart cleared.');
+        }
+
+        function addToCart(item) {
+            const existingItem = cart.find(i => i.id === item.id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                const fullItem = menuData.find(m => m.id === item.id);
+                if (fullItem) {
+                    cart.push({ id: fullItem.id, name: fullItem.name, price: fullItem.price, quantity: 1 });
+                } else {
+                    cart.push({ ...item, quantity: 1 });
+                }
+            }
+            updateCartDisplay();
+            console.log(`Added ${item.name} to cart. Current quantity: ${existingItem ? existingItem.quantity : 1}`);
+        }
+
+        function updateCartDisplay() {
+            cartItemsElement.innerHTML = '';
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                clearCartBtn.classList.add('hidden');
+                cartTotalElement.textContent = '$0.00';
+                return;
+            }
+
+            emptyCartMessage.classList.add('hidden');
+            clearCartBtn.classList.remove('hidden');
+            let total = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+
+                const itemHtml = `
+                    <div class="flex justify-between items-center text-gray-800 text-sm py-1 group">
+                        <span class="truncate pr-2">${item.name}</span>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="decreaseQuantity('${item.id}')"
+                                    class="text-red-500 hover:text-red-700 text-base font-bold transition-colors w-5 h-5 flex justify-center items-center rounded-full border border-red-500 hover:border-red-700 bg-red-50"
+                                    aria-label="Decrease quantity">
+                                -
+                            </button>
+                            <span class="font-bold text-gray-900 w-4 text-center">${item.quantity}</span>
+                            <span class="font-semibold text-red-700 w-12 text-right">$${itemTotal.toFixed(2)}</span>
+                            <!-- Button to remove the entire line item (Cancel/Delete) -->
+                            <button onclick="removeLineItem('${item.id}')"
+                                    class="text-gray-400 hover:text-red-700 p-1 rounded-full leading-none transition-colors ml-2"
+                                    aria-label="Remove item">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                cartItemsElement.innerHTML += itemHtml;
+            });
+
+            cartTotalElement.textContent = `$${total.toFixed(2)}`;
+        }
+
+        function updateOrderSummary() {
+            if (cart.length === 0) {
+                orderSummaryDetails.innerHTML = '<p class="text-gray-700 font-bold">Your cart is empty.</p>';
+                return;
+            }
+
+            let summaryHtml = '<h4 class="font-bold mb-2 text-lg">Your Items:</h4><ul class="list-disc pl-5 space-y-1 text-gray-700">';
+            let total = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                summaryHtml += `<li>${item.name} (x${item.quantity}) - $${itemTotal.toFixed(2)}</li>`;
+            });
+
+            summaryHtml += '</ul>';
+            summaryHtml += `<div class="mt-4 pt-2 border-t font-bold text-xl flex justify-between text-gray-900"><span>TOTAL:</span><span class="text-red-700">$${total.toFixed(2)}</span></div>`;
+            orderSummaryDetails.innerHTML = summaryHtml;
+        }
+
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const orderDetails = JSON.stringify(cart);
+
+            if (cart.length === 0) {
+                displayStatus(orderStatusMessage, 'Your cart is empty. Please add items.', 'bg-yellow-100 text-yellow-800');
+                return;
+            }
+
+            if (!name || !phone) {
+                displayStatus(orderStatusMessage, 'Please fill out both your name and phone number.', 'bg-yellow-100 text-yellow-800');
+                return;
+            }
+
+            console.log(`Order Placed: Name=${name}, Phone=${phone}, Address=${address || 'Pickup'}, Items=${orderDetails}`);
+
+            displayStatus(
+                orderStatusMessage,
+                `✅ **Order Confirmed, ${name}!** We've received your order and will process it shortly. A text message with confirmation details has been simulated and sent to **${phone}**.`,
+                'bg-green-100 text-green-800'
+            );
+
+            contactForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
+
+            setTimeout(() => {
+                cart = [];
+                updateCartDisplay();
+                showMainContent();
+            }, 5000);
+        });
+
+        reservationForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('res-name').value.trim();
+            const phone = document.getElementById('res-phone').value.trim();
+            const date = document.getElementById('res-date').value;
+            const time = document.getElementById('res-time').value;
+            const guests = document.getElementById('res-guests').value;
+
+            if (!name || !phone || !date || !time || !guests) {
+                displayStatus(resStatusMessage, 'Please fill out all required fields for the reservation.', 'bg-yellow-100 text-yellow-800');
+                return;
+            }
+
+            console.log(`Reservation Booked: Name=${name}, Phone=${phone}, Date=${date}, Time=${time}, Guests=${guests}`);
+
+            displayStatus(
+                resStatusMessage,
+                `🥳 **Reservation Confirmed, ${name}!** Your table for ${guests} on ${date} at ${time} is booked. We look forward to seeing you!`,
+                'bg-green-100 text-green-800'
+            );
+
+            reservationForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
+
+            setTimeout(() => {
+                showMainContent();
+            }, 5000);
+        });
+
+        loadMenuFromAPI();
+        checkMenuTime();
+        updateCartDisplay();
+        showMainContent();
+    </script>
+</body>
+</html>

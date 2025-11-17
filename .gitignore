@@ -1,0 +1,38 @@
+# ---- Python ----
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- Visual Studio ----
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+bin/
+obj/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: Database files
+# Uncomment if you don't want to push your .db file
+# *.db
+
+# Environment files
+.env
