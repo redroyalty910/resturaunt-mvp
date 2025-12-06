@@ -1,4 +1,8 @@
+from concurrent.futures import thread
 import os
+import webbrowser
+import threading
+import time
 from flask import Flask, render_template, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
@@ -34,12 +38,12 @@ def index():
 # --- API: Return menu as JSON ---
 @app.route('/api/menu')
 def get_menu():
-    query = text("SELECT item_name, category, price, description FROM Menu WHERE availability = 1")
+    query = text("SELECT item_name, category, price, description, image_filename FROM Menu WHERE availability = 1")
     rows = db.session.execute(query).fetchall()
 
     menu = []
     for r in rows:
-        filename = f"{slugify(r.item_name)}.jpg"
+        filename = r.image_filename or f"{slugify(r.item_name)}.jpg"
         menu.append({
             "item_name": r.item_name,
             "category": r.category,
@@ -48,6 +52,10 @@ def get_menu():
             "image": f"/images/{filename}"
         })
     return jsonify(menu)
+
+def open_browser():
+    time.sleep(1)
+    webbrowser.open_new(f'http://127.0.0.1:{PORT}/')
 
 # --- Route to serve images ---
 @app.route('/images/<filename>')
@@ -59,4 +67,8 @@ if __name__ == '__main__':
     HOST = "0.0.0.0"
     print(f"--- Flask Application Started Successfully ---")
     print(f"API endpoints available at: http://127.0.0.1:{PORT}/")
+
+    browser_thread = threading.Thread(target=open_browser)
+    browser_thread.start()
+
     app.run(debug=True, host=HOST, port=PORT)
