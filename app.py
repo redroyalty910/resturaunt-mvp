@@ -3,7 +3,8 @@ import os
 import webbrowser
 import threading
 import time
-from flask import Flask, render_template, jsonify, send_from_directory, request
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, jsonify, send_from_directory, request, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
 
@@ -16,6 +17,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+app.secret_key = "asecretkey" # this is used for session handling
 
 # Function to for making item names URL-friendly
 def slugify(name):
