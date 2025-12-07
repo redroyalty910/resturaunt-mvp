@@ -47,6 +47,11 @@ def get_menu():
     menu = []
     for r in rows:
         filename = r.image_filename or f"{slugify(r.item_name)}.jpg"
+
+        image_path = os.path.join(BASE_DIR, "static", "images", filename)
+        if not os.path.exists(image_path):
+            filename = "placeholder.jpg"
+
         menu.append({
             "item_name": r.item_name,
             "category": r.category,
@@ -131,6 +136,134 @@ def debug_orders():
     result = [dict(r._mapping) for r in rows]
 
     return jsonify(result)
+
+# --- Admin Login ---
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if session.get('admin_logged_in'):
+        return redirect('admin')
+
+    if request.method == 'POST':
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
+
+        admin = db.session.execute(
+            text("SELECT * FROM Admin WHERE username = :username"),
+            {"username": username}
+        ).fetchone()
+
+        if admin and check_password_hash(admin.password_hash, password):
+            session['admin_logged_in'] = True
+            return jsonify({"success": True, "message": "Logged in successfully!"})
+        else:
+            return jsonify({"success": False, "message": "Invalid credentials"}), 401
+
+    return render_template('admin_login.html')
+
+
+# --- Admin Logout ---
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect('/admin/login')
+
+
+# --- Admin Panel Page ---
+@app.route('/admin')
+def admin_panel():
+    if not session.get('admin_logged_in'):
+        return redirect('/admin/login')
+    return render_template('admin_panel.html')
+
+
+# --- Admin: Fetch All Menu Items ---
+@app.route('/api/admin/menu')
+def admin_get_menu():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    rows = db.session.execute(text("SELECT * FROM Menu")).fetchall()
+    items = [dict(r._mapping) for r in rows]
+    return jsonify(items)
+
+
+# --- Admin: Add Menu Item ---
+@app.route('/api/admin/add_item', methods=['POST'])
+def admin_add_item():
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    name = data.get("item_name")
+    category = data.get("category")
+    price = data.get("price")
+    description = data.get("description") or ""
+    image_filename = data.get("image_filename") or f"{slugify(name)}.jpg"
+    availability = data.get("availability", 1)
+
+    if not name or not category or price is None:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    db.session.execute(
+        text("""
+            INSERT INTO Menu (item_name, category, price, description, image_filename, availability)
+            VALUES (:name, :category, :price, :description, :image_filename, :availability)
+        """), {
+            "name": name,
+            "category": category,
+            "price": price,
+            "description": description,
+            "image_filename": image_filename,
+            "availability": availability
+        }
+    )
+    db.session.commit()
+    return jsonify({"success": True, "message": "Menu item added successfully!"})
+
+
+# --- Admin: Edit Menu Item ---
+@app.route('/api/admin/edit_item/<int:item_id>', methods=['POST'])
+def admin_edit_item(item_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    db.session.execute(
+        text("""
+            UPDATE Menu SET
+                item_name = :name,
+                category = :category,
+                price = :price,
+                description = :description,
+                image_filename = :image,
+                availability = :avail
+            WHERE M_ID = :id
+        """), {
+            "name": data.get("item_name"),
+            "category": data.get("category"),
+            "price": data.get("price"),
+            "description": data.get("description") or "",
+            "image": data.get("image_filename") or f"{slugify(data.get('item_name'))}.jpg",
+            "avail": data.get("availability", 1),
+            "id": item_id
+        }
+    )
+    db.session.commit()
+    return jsonify({"success": True, "message": "Menu item updated!"})
+
+
+# --- Admin: Delete Menu Item ---
+@app.route('/api/admin/delete_item/<int:item_id>', methods=['DELETE'])
+def admin_delete_item(item_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    db.session.execute(text("DELETE FROM Menu WHERE M_ID = :id"), {"id": item_id})
+    db.session.commit()
+    return jsonify({"success": True, "message": "Menu item deleted!"})
+
+
 
 if __name__ == '__main__':
     PORT = 8000

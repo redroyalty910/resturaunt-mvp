@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+  
+    <nav class="bg-red-700 text-white px-6 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Ratatouille Admin</h1>
+        <div class="flex items-center space-x-4">
+            <button id="openFormBtn" class="bg-white text-red-700 px-4 py-2 rounded hover:bg-gray-100">➕ Add Item</button>
+            <a href="/admin/logout" class="bg-gray-200 text-red-700 px-4 py-2 rounded hover:bg-gray-300">Logout</a>
+        </div>
+    </nav>
+
+    
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-2xl font-bold mb-4">Menu Items</h2>
+            <div id="menuTable"></div>
+        </div>
+    </div>
+
+    <div id="addForm" class="fixed top-0 right-0 h-full w-full md:w-1/3 bg-white shadow-xl transform translate-x-full transition-transform duration-300 z-50">
+        <div class="p-6 flex flex-col h-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Add New Item</h2>
+                <button id="closeFormBtn" class="text-gray-500 hover:text-gray-700">&times;</button>
+            </div>
+
+            <div class="flex-1 overflow-auto">
+                <div class="space-y-4">
+                    <input id="newName" placeholder="Item Name" class="w-full border p-3 rounded">
+                    <input id="newCategory" placeholder="Category" class="w-full border p-3 rounded">
+                    <input id="newPrice" type="number" step="0.01" placeholder="Price" class="w-full border p-3 rounded">
+                    <textarea id="newDescription" placeholder="Description" class="w-full border p-3 rounded"></textarea>
+                    <button onclick="addMenuItem()" class="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">Add Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const addForm = document.getElementById('addForm');
+        document.getElementById('openFormBtn').addEventListener('click', () => {
+            addForm.classList.remove('translate-x-full');
+        });
+        document.getElementById('closeFormBtn').addEventListener('click', () => {
+            addForm.classList.add('translate-x-full');
+        });
+
+        // Load menu items
+        async function loadMenuItems() {
+            const res = await fetch('/api/admin/menu');
+            const items = await res.json();
+
+            let html = '<table class="w-full text-left border-collapse">';
+            html += '<tr class="border-b"><th>Name</th><th>Category</th><th>Price</th><th>Description</th><th>Actions</th></tr>';
+
+            items.forEach(item => {
+                html += `<tr class="border-b">
+                    <td><input value="${item.item_name}" class="border p-1 rounded w-full" id="name-${item.M_ID}"></td>
+                    <td><input value="${item.category}" class="border p-1 rounded w-full" id="cat-${item.M_ID}"></td>
+                    <td><input type="number" step="0.01" value="${item.price}" class="border p-1 rounded w-full" id="price-${item.M_ID}"></td>
+                    <td><input value="${item.description}" class="border p-1 rounded w-full" id="desc-${item.M_ID}"></td>
+                    <td class="space-x-2">
+                        <button onclick="editItem(${item.M_ID})" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
+                        <button onclick="deleteItem(${item.M_ID})" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Delete</button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</table>';
+            document.getElementById('menuTable').innerHTML = html;
+        }
+
+        // Add menu item
+        function addMenuItem() {
+            const payload = {
+                item_name: document.getElementById("newName").value.trim(),
+                category: document.getElementById("newCategory").value.trim(),
+                price: parseFloat(document.getElementById("newPrice").value),
+                description: document.getElementById("newDescription").value.trim(),
+                availability: 1
+            };
+
+            if (!payload.item_name || !payload.category || isNaN(payload.price)) {
+                alert("Name, category, and price are required.");
+                return;
+            }
+
+            fetch('/api/admin/add_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                loadMenuItems();
+                addForm.classList.add('translate-x-full'); // close form
+                document.getElementById("newName").value = "";
+                document.getElementById("newCategory").value = "";
+                document.getElementById("newPrice").value = "";
+                document.getElementById("newDescription").value = "";
+            })
+            .catch(err => { console.error(err); alert("Error adding item."); });
+        }
+
+        // Edit menu item
+        function editItem(id) {
+            const payload = {
+                item_name: document.getElementById(`name-${id}`).value.trim(),
+                category: document.getElementById(`cat-${id}`).value.trim(),
+                price: parseFloat(document.getElementById(`price-${id}`).value),
+                description: document.getElementById(`desc-${id}`).value.trim(),
+                availability: 1
+            };
+
+            fetch(`/api/admin/edit_item/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                loadMenuItems();
+            });
+        }
+
+        // Delete menu item
+        function deleteItem(id) {
+            if(!confirm("Delete this item?")) return;
+
+            fetch(`/api/admin/delete_item/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                loadMenuItems();
+            });
+        }
+
+        // Initial load
+        loadMenuItems();
+    </script>
+
+</body>
+</html>

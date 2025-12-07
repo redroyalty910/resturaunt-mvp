@@ -30,6 +30,8 @@
     <Content Include="requirements.txt" />
     <Content Include="restaurant_system.db" />
     <Content Include="restaurant_system_test.db" />
+    <Content Include="templates\admin_login.html" />
+    <Content Include="templates\admin_panel.html" />
     <Content Include="templates\index.html" />
   </ItemGroup>
   <ItemGroup>
