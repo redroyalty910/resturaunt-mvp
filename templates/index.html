@@ -271,8 +271,9 @@
 
         function showOrderForm(defaultTab = 'order') {
             if (defaultTab === 'order' && cart.length === 0) {
-                console.log('Your cart is empty. Please add items before checking out.');
-                const checkoutButton = document.querySelector('#cart-summary button');
+                displayStatus(orderStatusMessage, 'Your cart is empty. Please add items before checking out.', 'bg-yellow-100 text-yellow-800');
+
+                const checkoutButton = document.querySelector('#cart-summary > button:last-of-type');
                 checkoutButton.textContent = 'Cart is Empty!';
                 checkoutButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
 
@@ -565,21 +566,42 @@
                 return;
             }
 
-            console.log(`Order Placed: Name=${name}, Phone=${phone}, Address=${address || 'Pickup'}, Items=${orderDetails}`);
+            const payload = {
+                name,
+                phone,
+                address,
+                items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity }))
+            };
 
-            displayStatus(
-                orderStatusMessage,
-                `✅ **Order Confirmed, ${name}!** We've received your order and will process it shortly. A text message with confirmation details has been simulated and sent to **${phone}**.`,
-                'bg-green-100 text-green-800'
-            );
+            fetch(`${API_BASE_URL}/api/place_order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        displayStatus(
+                            orderStatusMessage,
+                            `✅ **Order Confirmed, ${name}!** We've received your order and will process it shortly. A text message with confirmation details has been simulated and sent to **${phone}**.`,
+                            'bg-green-100 text-green-800'
+                        );
+                        contactForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
 
-            contactForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
+                        setTimeout(() => {
+                            cart = [];
+                            updateCartDisplay();
+                            showMainContent();
+                        }, 3000);
+                    } else {
+                        displayStatus(orderStatusMessage, `⚠️ ${data.message}`, 'bg-red-100 text-red-800');
+                    }
+                })
+                .catch(err => {
+                    displayStatus(orderStatusMessage, `⚠️ Error placing order. Try again.`, 'bg-red-100 text-red-800');
+                    console.error(err);
+                });
 
-            setTimeout(() => {
-                cart = [];
-                updateCartDisplay();
-                showMainContent();
-            }, 5000);
         });
 
         reservationForm.addEventListener('submit', function(event) {

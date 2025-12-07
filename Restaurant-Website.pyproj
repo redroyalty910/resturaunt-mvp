@@ -29,6 +29,7 @@
   <ItemGroup>
     <Content Include="requirements.txt" />
     <Content Include="restaurant_system.db" />
+    <Content Include="restaurant_system_test.db" />
     <Content Include="templates\index.html" />
   </ItemGroup>
   <ItemGroup>
