@@ -604,33 +604,66 @@
 
         });
 
-        reservationForm.addEventListener('submit', function(event) {
+        reservationForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
+            //Get form values
             const name = document.getElementById('res-name').value.trim();
             const phone = document.getElementById('res-phone').value.trim();
             const date = document.getElementById('res-date').value;
             const time = document.getElementById('res-time').value;
             const guests = document.getElementById('res-guests').value;
 
+            //Basic validation
             if (!name || !phone || !date || !time || !guests) {
                 displayStatus(resStatusMessage, 'Please fill out all required fields for the reservation.', 'bg-yellow-100 text-yellow-800');
                 return;
             }
 
-            console.log(`Reservation Booked: Name=${name}, Phone=${phone}, Date=${date}, Time=${time}, Guests=${guests}`);
+            if (parseInt(guests) <= 0) {
+                displayStatus(resStatusMessage, 'Number of guests must be greater than 0.', 'bg-yellow-100 text-yellow-800');
+                return;
+            }
 
-            displayStatus(
-                resStatusMessage,
-                `🥳 **Reservation Confirmed, ${name}!** Your table for ${guests} on ${date} at ${time} is booked. We look forward to seeing you!`,
-                'bg-green-100 text-green-800'
-            );
+            // Prepare payload 
+            const payload = {
+                name,
+                phone,
+                date,
+                time,
+                guests
+            };
 
-            reservationForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
+            // Send to backend
+            fetch(`${API_BASE_URL}/api/reserve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        displayStatus(
+                            resStatusMessage,
+                            `🥳 **Reservation Confirmed, ${name}!** Your table for ${guests} on ${date} at ${time} is booked.`,
+                            'bg-green-100 text-green-800'
+                        );
 
-            setTimeout(() => {
-                showMainContent();
-            }, 5000);
+
+                        reservationForm.querySelectorAll('input, button[type="submit"]').forEach(el => el.disabled = true);
+
+                        // Return to main menu after 5 seconds
+                        setTimeout(() => {
+                            showMainContent();
+                        }, 5000);
+                    } else {
+                        displayStatus(resStatusMessage, `⚠️ ${data.message}`, 'bg-red-100 text-red-800');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    displayStatus(resStatusMessage, '⚠️ Error creating reservation. Please try again.', 'bg-red-100 text-red-800');
+                });
         });
 
         loadMenuFromAPI();

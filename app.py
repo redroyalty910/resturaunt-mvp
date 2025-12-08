@@ -107,6 +107,55 @@ def place_order():
     db.session.commit()
     return jsonify({"success": True, "message": "Order placed successfully!"})
 
+
+@app.route('/api/reserve', methods=['POST'])
+def reserve_table():
+    data = request.get_json()
+
+    name = data.get('name')
+    phone = data.get('phone')
+    date = data.get('date')
+    time_val = data.get('time')
+    num_guest = data.get('guests')
+
+    # --- Basic validation ---
+    if not name or not phone or not date or not time_val or not num_guest:
+        return jsonify({"success": False, "message": "All fields are required"}), 400
+
+    if int(num_guest) <= 0:
+        return jsonify({"success": False, "message": "Number of guests must be greater than 0"}), 400
+
+    # --- Check if customer exists ---
+    customer = db.session.execute(
+        text("SELECT C_ID FROM Customer WHERE phone = :phone"),
+        {"phone": phone}
+    ).fetchone()
+
+    if customer:
+        customer_id = customer.C_ID
+    else:
+        # Insert new customer
+        result = db.session.execute(
+            text("INSERT INTO Customer (name, phone) VALUES (:name, :phone)"),
+            {"name": name, "phone": phone}
+        )
+        customer_id = result.lastrowid
+
+    # --- Insert reservation ---
+    db.session.execute(
+        text("""
+            INSERT INTO Reservation (date, time, num_guest, C_ID, S_ID)
+            VALUES (:date, :time, :num_guest, :cid, NULL)
+        """),
+        {"date": date, "time": time_val, "num_guest": num_guest, "cid": customer_id}
+    )
+
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Reservation successfully created!"})
+
+
+
 def open_browser():
     time.sleep(1)
     webbrowser.open_new(f'http://127.0.0.1:{PORT}/')
