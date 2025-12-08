@@ -81,8 +81,19 @@ def place_order():
     result = db.session.execute(query, {"name": customer_name, "phone": customer_phone, "address": customer_address})
     customer_id = result.lastrowid
 
+    # Pricing logic
+    TAX_RATE = 0.08875     
+    DELIVERY_FEE = 5.00     
+
+    subtotal = sum(item['price'] * item['quantity'] for item in order_items)
+    tax = round(subtotal * TAX_RATE, 2)
+
+    # Only add delivery fee if address is provided
+    delivery_fee = DELIVERY_FEE if customer_address else 0
+
+    total_amount = round(subtotal + tax + delivery_fee, 2)
+
     # Insert order
-    total_amount = sum(item['price'] * item['quantity'] for item in order_items)
     query = text("""
         INSERT INTO `Order` (amount, status, C_ID, S_ID)
         VALUES (:amount, 'Pending', :cid, 1)
