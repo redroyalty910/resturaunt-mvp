@@ -22,3 +22,11 @@ then run python app in terminal with command:
 ```
 python app.py
 ```
+
+To access admin login page, type after the URL 8000/```admin/login```
+
+The default login information to access admin panel for testing purposes is:
+
+username: ``` admin ```
+
+password: ```Password123```
