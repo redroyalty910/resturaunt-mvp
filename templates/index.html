@@ -37,6 +37,13 @@
             top: 0;
             z-index: 100;
         }
+
+        .hero-bg {
+            background-image: url('/static/images/food-collage.jpg');
+            background-size: cover;
+        }
+
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -60,15 +67,24 @@
 
     <main id="main-content" class="flex-grow">
 
-        <section class="bg-gray-900 text-white py-20 mb-12 shadow-inner">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <section class="relative overflow-hidden text-white py-24 mb-12 shadow-inner">
+
+            
+            <div class="absolute inset-0 z-0 hero-bg"></div>
+
+            
+            <div class="absolute inset-0 bg-black/65 z-10"></div>
+
+            
+            <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
                     Taste the Passion. Order Online.
                 </h1>
                 <p class="text-xl text-red-300 mb-8 max-w-2xl mx-auto">
                     Fresh ingredients, handcrafted meals, delivered right to your door.
                 </p>
-                <button class="hero-button bg-red-700 text-white px-10 py-4 rounded-xl text-2xl font-bold uppercase shadow-2xl hover:bg-red-800" onclick="showOrderForm('order')">
+                <button class="hero-button bg-red-700 text-white px-10 py-4 rounded-xl text-2xl font-bold uppercase shadow-2xl hover:bg-red-800"
+                        onclick="showOrderForm('order')">
                     Start Your Order
                 </button>
             </div>
