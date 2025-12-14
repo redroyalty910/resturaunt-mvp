@@ -96,10 +96,10 @@ def place_order():
 
     # Insert order
     query = text("""
-        INSERT INTO `Order` (amount, status, C_ID, S_ID)
-        VALUES (:amount, 'Pending', :cid, 1)
+        INSERT INTO `Order` (amount, status, C_ID, S_ID, special_instructions)
+        VALUES (:amount, 'Pending', :cid, 1, :special_instructions)
     """)
-    result = db.session.execute(query, {"amount": total_amount, "cid": customer_id})
+    result = db.session.execute(query, {"amount": total_amount, "cid": customer_id, "special_instructions": delivery_instructions})
     order_id = result.lastrowid
 
     # Insert order details
