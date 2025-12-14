@@ -157,8 +157,8 @@
                         </div>
 
                         <div class="mb-6">
-                            <label for="instructions" class="block text-lg font-medium text-gray-700 mb-2">Special Delivery Instructions</label>
-                            <textarea id="instructions" name="instructions" rows="3"
+                            <label for="special_instructions" class="block text-lg font-medium text-gray-700 mb-2">Special Delivery Instructions</label>
+                            <textarea id="special_instructions" name="special_instructions" rows="3"
                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-700 focus:border-red-700 transition duration-150"
                                    placeholder="e.g., Leave order on the porch, or any allergies/requests."></textarea>
                         </div>
@@ -608,7 +608,7 @@
             const name = document.getElementById('name').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const address = document.getElementById('address').value.trim();
-            const instructions = document.getElementById('instructions').value.trim();
+            const special_instructions = document.getElementById('special_instructions').value.trim();
             const orderDetails = JSON.stringify(cart);
 
             if (cart.length === 0) {
@@ -625,7 +625,7 @@
                 name,
                 phone,
                 address,
-                instructions,
+                special_instructions,
                 items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity }))
             };
 
