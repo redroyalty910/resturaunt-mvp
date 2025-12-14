@@ -4,6 +4,7 @@ import webbrowser
 import threading
 import time
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask import Flask, render_template, jsonify, send_from_directory, request, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
@@ -13,8 +14,12 @@ app = Flask(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "restaurant_system_test.db")
 
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "images")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
 
@@ -33,6 +38,9 @@ def slugify(name):
             .strip()
             .replace(" ", "-")
     )
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -202,7 +210,7 @@ def debug_orders():
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if session.get('admin_logged_in'):
-        return redirect('admin')
+        return redirect('/admin')
 
     if request.method == 'POST':
         data = request.get_json()
@@ -323,6 +331,66 @@ def admin_delete_item(item_id):
     db.session.execute(text("DELETE FROM Menu WHERE M_ID = :id"), {"id": item_id})
     db.session.commit()
     return jsonify({"success": True, "message": "Menu item deleted!"})
+
+
+@app.route("/api/admin/upload_image", methods=["POST"])
+def upload_image():
+    if not session.get("admin_logged_in"):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    if "image" not in request.files:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+
+    file = request.files["image"]
+
+    if file.filename == "":
+        return jsonify({"success": False, "message": "Empty filename"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"success": False, "message": "Invalid file type"}), 400
+
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    file.save(save_path)
+
+    return jsonify({
+        "success": True,
+        "filename": filename
+    })
+
+@app.route("/api/admin/update_item_image/<int:item_id>", methods=["POST"])
+def update_item_image(item_id):
+    if not session.get("admin_logged_in"):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    if "image" not in request.files:
+        return jsonify({"success": False, "message": "No image uploaded"}), 400
+
+    file = request.files["image"]
+
+    if file.filename == "":
+        return jsonify({"success": False, "message": "Empty filename"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"success": False, "message": "Invalid file type"}), 400
+
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(save_path)
+
+    # Update DB
+    db.session.execute(
+        text("UPDATE Menu SET image_filename = :img WHERE M_ID = :id"),
+        {"img": filename, "id": item_id}
+    )
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Image updated",
+        "filename": filename
+    })
 
 
 
