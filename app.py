@@ -68,6 +68,7 @@ def place_order():
     customer_name = data.get('name')
     customer_phone = data.get('phone')
     customer_address = data.get('address') or None 
+    delivery_instructions = data.get('instructions') or None
     order_items = data.get('items')
     
     if not customer_name or not customer_phone or not order_items:
