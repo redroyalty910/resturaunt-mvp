@@ -608,6 +608,7 @@
             const name = document.getElementById('name').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const address = document.getElementById('address').value.trim();
+            const instructions = document.getElementById('instructions').value.trim();
             const orderDetails = JSON.stringify(cart);
 
             if (cart.length === 0) {
@@ -624,6 +625,7 @@
                 name,
                 phone,
                 address,
+                instructions,
                 items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity }))
             };
 
