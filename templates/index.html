@@ -47,12 +47,20 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <header class="bg-white shadow-md sticky-nav">
+    <header class="bg-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="text-3xl font-extrabold text-red-700">
-                Ratatouille
+            <div class="flex items-center gap-4">
+                <div class="text-3xl font-extrabold text-red-700">
+                    Ratatouille
+                </div>
+                <div class="text-sm sm:text-base font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
+                    <span class="text-gray-500">Time:</span>
+                    <span id="header-clock" class="text-gray-800"></span>
+                    <span id="active-window" class="ml-2 text-red-700"></span>
+                </div>
             </div>
             <nav class="space-x-4 flex items-center">
+
                 <button id="navHomeBtn" class="text-gray-600 hover:text-red-700 font-semibold hidden" onclick="showMainContent()">Menu</button>
                 <button id="navOrderBtn" class="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors shadow-md" onclick="showOrderForm('order')">
                     Order Online
@@ -312,18 +320,40 @@
 
         let menuData = [];
 
+        function updateHeaderClock() {
+            const clockEl = document.getElementById("header-clock");
+            if (!clockEl) return;
+
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        }
+
+        function getActiveWindowLabel() {
+            const hour = new Date().getHours();
+            if (hour >= 7 && hour < 11) return "Breakfast";
+            if (hour >= 11 && hour < 16) return "Lunch";
+            if (hour >= 16 && hour < 22) return "Dinner";
+            return "All Day";
+        }
+
+        function updateActiveWindowLabel() {
+            const el = document.getElementById("active-window");
+            if (!el) return;
+            el.textContent = `(${getActiveWindowLabel()})`;
+        }
+
+
         async function loadMenuFromAPI() {
             const response = await fetch("/api/menu");
             const items = await response.json();
 
-            // Convert DB format → frontend format
             menuData = items.map(item => ({
                 id: item.id || item.item_name.toLowerCase().replace(/\s+/g, '-'),
                 name: item.item_name,
                 price: item.price,
                 category: item.category.toLowerCase(),
                 description: item.description || "",
-                image: item.image   // provided by Flask: /images/...jpg
+                image: item.image
             }));
 
             filteredMenuData = [...menuData];
@@ -372,7 +402,7 @@
             navHomeBtn.classList.add('hidden');
             resetAllForms();
 
-            checkMenuTime();
+           // checkMenuTime();
         }
 
         function showOrderForm(defaultTab = 'order') {
@@ -809,10 +839,18 @@
                 });
         });
 
+        updateHeaderClock();
+        updateActiveWindowLabel();
+        setInterval(() => {
+            updateHeaderClock();
+            updateActiveWindowLabel();
+            checkMenuTime();
+        }, 1000);
+
         loadMenuFromAPI();
-        checkMenuTime();
         updateCartDisplay();
         showMainContent();
+
     </script>
 </body>
 </html>
